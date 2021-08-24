@@ -122,4 +122,9 @@ namespace D3D12TranslationLayer
             (bCB14 ? ROOT_SIGNATURE_FLAG_ALLOW_LOW_TIER_RESERVED_HW_CB_LIMIT : D3D12_ROOT_SIGNATURE_FLAG_NONE);
         Storage.RootDesc.Init_1_1(ParameterIndex, Storage.Parameter, 0, NULL, Flags);
     }
+	
+	void DeviceChild::AddToDeferredDeletionQueue(ID3D12Object* pObject)
+    {
+        // pusingha: For build to succeed
+    }
 };
