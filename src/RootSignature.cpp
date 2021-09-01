@@ -9,15 +9,7 @@ namespace D3D12TranslationLayer
 {
     void RootSignatureBase::Create(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootDesc) noexcept(false)
     {
-        CComPtr<ID3DBlob> spBlob;
-
-        ThrowFailure(D3D12SerializeVersionedRootSignature(&rootDesc, &spBlob, NULL));
-
-        Create(spBlob->GetBufferPointer(), spBlob->GetBufferSize());
-    }
-    void RootSignatureBase::Create(const void* pBlob, SIZE_T BlobSize) noexcept(false)
-    {
-        ThrowFailure(m_pDevice12->CreateRootSignature(0, pBlob, BlobSize, IID_PPV_ARGS(&m_pRootSignature)));
+        ThrowFailure(D3D12SerializeVersionedRootSignature(&rootDesc, &m_pBlob, NULL));
     }
 
     D3D12_SHADER_VISIBILITY GetShaderVisibility(EShaderStage stage)
@@ -33,7 +25,7 @@ namespace D3D12TranslationLayer
         }
     }
 
-    void RootSignatureDesc::GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ID3D12Device* pDevice) const
+    void RootSignatureDesc::GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage) const
     {
         const bool bGraphics = (m_Flags & Compute) == 0;
         constexpr UINT MaxShaderStages = std::extent<decltype(m_ShaderStages)>::value;

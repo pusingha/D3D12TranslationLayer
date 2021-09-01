@@ -157,7 +157,7 @@ namespace D3D12TranslationLayer
 
         UINT GetUAVBindingCount() const { return NonCBBucketToBindingCount(m_UAVBucket); }
         UINT64 GetAsUINT64() const { return *reinterpret_cast<const UINT64*>(this); }
-        void GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ID3D12Device* pDevice) const;
+        void GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage) const;
 
         bool operator==(RootSignatureDesc const& o) const
         {
@@ -203,43 +203,40 @@ namespace D3D12TranslationLayer
     class RootSignatureBase
     {
     public:
-        RootSignatureBase(ID3D12Device* pDevice)
-            : m_pDevice12(pDevice)
+        RootSignatureBase()
         {
         }
 
-        ID3D12RootSignature* GetForImmediateUse() const { return m_pRootSignature.get(); }
+        // pusingha: We do not use this, but is needed for compilation
+        ID3D12RootSignature* GetForImmediateUse() const { return nullptr; }
+        ID3DBlob* GetRootSignatureBlob() const { return m_pBlob.get(); }
 
     protected:
         void Create(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootDesc) noexcept(false);
-        void Create(const void* pBlob, SIZE_T BlobSize) noexcept(false);
 
-        // pusingha: Keeping local RootSignatureObject and Device in lieu of ImmediateContext
-        const unique_comptr<ID3D12Device> m_pDevice12;
-        unique_comptr<ID3D12RootSignature> m_pRootSignature;
+        unique_comptr<ID3DBlob> m_pBlob;
     };
 
     class InternalRootSignature : public RootSignatureBase
     {
     public:
-        InternalRootSignature(ID3D12Device* pDevice)
-            : RootSignatureBase(pDevice)
+        InternalRootSignature()
+            : RootSignatureBase()
         {
         }
 
         using RootSignatureBase::Create;
-        ID3D12RootSignature* GetRootSignature() { return m_pRootSignature.get(); }
     };
 
     class RootSignature : public RootSignatureBase
     {
     public:
-        RootSignature(ID3D12Device* pDevice, RootSignatureDesc const& desc)
-            : RootSignatureBase(pDevice)
+        RootSignature(RootSignatureDesc const& desc)
+            : RootSignatureBase()
             , m_Desc(desc)
         {
             VersionedRootSignatureDescWithStorage Storage;
-            m_Desc.GetAsD3D12Desc(Storage, pDevice);
+            m_Desc.GetAsD3D12Desc(Storage);
             Create(Storage.RootDesc);
         }
 
