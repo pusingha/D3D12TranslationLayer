@@ -157,7 +157,7 @@ namespace D3D12TranslationLayer
 
         UINT GetUAVBindingCount() const { return NonCBBucketToBindingCount(m_UAVBucket); }
         UINT64 GetAsUINT64() const { return *reinterpret_cast<const UINT64*>(this); }
-        void GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ImmediateContext* pParent) const;
+        void GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ID3D12Device* pDevice) const;
 
         bool operator==(RootSignatureDesc const& o) const
         {
@@ -200,45 +200,45 @@ namespace D3D12TranslationLayer
 
     static_assert(offsetof(RootSignatureDesc, m_NumSRVSpacesUsed) == sizeof(UINT64), "Using as key");
 
-    class RootSignatureBase : protected DeviceChildImpl<ID3D12RootSignature>
+    class RootSignatureBase
     {
     public:
-        RootSignatureBase(ImmediateContext* pParent)
-            : DeviceChildImpl(pParent)
+        RootSignatureBase(ID3D12Device* pDevice)
+            : m_pDevice12(pDevice)
         {
         }
 
     protected:
         void Create(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootDesc) noexcept(false);
         void Create(const void* pBlob, SIZE_T BlobSize) noexcept(false);
+
+        const unique_comptr<ID3D12Device> m_pDevice12;
     };
 
     class InternalRootSignature : public RootSignatureBase
     {
     public:
-        InternalRootSignature(ImmediateContext* pParent)
-            : RootSignatureBase(pParent)
+        InternalRootSignature(ID3D12Device* pDevice)
+            : RootSignatureBase(pDevice)
         {
         }
 
         using RootSignatureBase::Create;
-        using DeviceChildImpl::Created;
         ID3D12RootSignature* GetRootSignature() { return GetForUse(COMMAND_LIST_TYPE::GRAPHICS); }
     };
 
     class RootSignature : public RootSignatureBase
     {
     public:
-        RootSignature(ImmediateContext* pParent, RootSignatureDesc const& desc)
-            : RootSignatureBase(pParent)
+        RootSignature(ID3D12Device* pDevice, RootSignatureDesc const& desc)
+            : RootSignatureBase(pDevice)
             , m_Desc(desc)
         {
             VersionedRootSignatureDescWithStorage Storage;
-            m_Desc.GetAsD3D12Desc(Storage, pParent);
+            m_Desc.GetAsD3D12Desc(Storage, pDevice);
             Create(Storage.RootDesc);
         }
 
-        using DeviceChildImpl::GetForImmediateUse;
         const RootSignatureDesc m_Desc;
     };
 };

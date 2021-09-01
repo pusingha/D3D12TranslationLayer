@@ -19,7 +19,7 @@ namespace D3D12TranslationLayer
     {
         Destroy();
 
-        ThrowFailure(m_pParent->m_pDevice12->CreateRootSignature(m_pParent->GetNodeMask(), pBlob, BlobSize, IID_PPV_ARGS(GetForCreate())));
+        ThrowFailure(m_pDevice12->CreateRootSignature(0, pBlob, BlobSize, IID_PPV_ARGS(GetForCreate())));
     }
 
     D3D12_SHADER_VISIBILITY GetShaderVisibility(EShaderStage stage)
@@ -35,7 +35,7 @@ namespace D3D12TranslationLayer
         }
     }
 
-    void RootSignatureDesc::GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ImmediateContext* pParent) const
+    void RootSignatureDesc::GetAsD3D12Desc(VersionedRootSignatureDescWithStorage& Storage, ID3D12Device* pDevice) const
     {
         const bool bGraphics = (m_Flags & Compute) == 0;
         constexpr UINT MaxShaderStages = std::extent<decltype(m_ShaderStages)>::value;
@@ -87,13 +87,14 @@ namespace D3D12TranslationLayer
                 ++pSRVRanges;
             }
             ++ParameterIndex;
-            if (pParent->ComputeOnly())
-            {
-                // Dummy descriptor range just to make the root parameter constants line up
-                Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
-                Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, m_NumSRVSpacesUsed[i] + 1, RangeFlags);
-            }
-            else
+            // pusingha: Compute only cards are a thing of the past. We should be fine removing this check
+            //if (pParent->ComputeOnly())
+            //{
+            //    // Dummy descriptor range just to make the root parameter constants line up
+            //    Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
+            //    Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, m_NumSRVSpacesUsed[i] + 1, RangeFlags);
+            //}
+            //else
             {
                 Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
                 Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, Stage.GetSamplerBindingCount(), 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
@@ -121,10 +122,5 @@ namespace D3D12TranslationLayer
         D3D12_ROOT_SIGNATURE_FLAGS Flags = BaseFlags |
             (bCB14 ? ROOT_SIGNATURE_FLAG_ALLOW_LOW_TIER_RESERVED_HW_CB_LIMIT : D3D12_ROOT_SIGNATURE_FLAG_NONE);
         Storage.RootDesc.Init_1_1(ParameterIndex, Storage.Parameter, 0, NULL, Flags);
-    }
-	
-	void DeviceChild::AddToDeferredDeletionQueue(ID3D12Object* pObject)
-    {
-        // pusingha: For build to succeed
     }
 };
