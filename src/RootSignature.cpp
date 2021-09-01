@@ -19,7 +19,7 @@ namespace D3D12TranslationLayer
     {
         Destroy();
 
-        ThrowFailure(m_pDevice12->CreateRootSignature(0, pBlob, BlobSize, IID_PPV_ARGS(GetForCreate())));
+        ThrowFailure(m_pDevice12->CreateRootSignature(0, pBlob, BlobSize, IID_PPV_ARGS(&m_pRootSignature)));
     }
 
     D3D12_SHADER_VISIBILITY GetShaderVisibility(EShaderStage stage)

@@ -212,7 +212,9 @@ namespace D3D12TranslationLayer
         void Create(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootDesc) noexcept(false);
         void Create(const void* pBlob, SIZE_T BlobSize) noexcept(false);
 
+        // pusingha: Keeping local RootSignatureObject and Device in lieu of ImmediateContext
         const unique_comptr<ID3D12Device> m_pDevice12;
+        unique_comptr<ID3D12RootSignature> m_pRootSignature;
     };
 
     class InternalRootSignature : public RootSignatureBase
@@ -224,7 +226,7 @@ namespace D3D12TranslationLayer
         }
 
         using RootSignatureBase::Create;
-        ID3D12RootSignature* GetRootSignature() { return GetForUse(COMMAND_LIST_TYPE::GRAPHICS); }
+        ID3D12RootSignature* GetRootSignature() { return m_pRootSignature.get(); }
     };
 
     class RootSignature : public RootSignatureBase
