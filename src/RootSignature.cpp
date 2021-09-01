@@ -17,8 +17,6 @@ namespace D3D12TranslationLayer
     }
     void RootSignatureBase::Create(const void* pBlob, SIZE_T BlobSize) noexcept(false)
     {
-        Destroy();
-
         ThrowFailure(m_pDevice12->CreateRootSignature(0, pBlob, BlobSize, IID_PPV_ARGS(&m_pRootSignature)));
     }
 
@@ -87,23 +85,14 @@ namespace D3D12TranslationLayer
                 ++pSRVRanges;
             }
             ++ParameterIndex;
-            // pusingha: Compute only cards are a thing of the past. We should be fine removing this check
-            //if (pParent->ComputeOnly())
-            //{
-            //    // Dummy descriptor range just to make the root parameter constants line up
-            //    Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
-            //    Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, m_NumSRVSpacesUsed[i] + 1, RangeFlags);
-            //}
-            //else
+
+            Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
+            Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, Stage.GetSamplerBindingCount(), 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+            if (Stage.m_UsesShaderInterfaces)
             {
-                Storage.Parameter[ParameterIndex].InitAsDescriptorTable(1, &Storage.DescriptorRanges[RangeIndex], Visibility);
-                Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, Stage.GetSamplerBindingCount(), 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
-                if (Stage.m_UsesShaderInterfaces)
-                {
-                    Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_COMMONSHADER_SAMPLER_SLOT_COUNT, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE, 0);
-                    Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_COMMONSHADER_SAMPLER_SLOT_COUNT, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE, 0);
-                    Storage.Parameter[ParameterIndex].DescriptorTable.NumDescriptorRanges += 2;
-                }
+                Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_COMMONSHADER_SAMPLER_SLOT_COUNT, 0, 1, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE, 0);
+                Storage.DescriptorRanges[RangeIndex++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_COMMONSHADER_SAMPLER_SLOT_COUNT, 0, 2, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE, 0);
+                Storage.Parameter[ParameterIndex].DescriptorTable.NumDescriptorRanges += 2;
             }
             ++ParameterIndex;
         }
