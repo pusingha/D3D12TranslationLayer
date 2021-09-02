@@ -209,12 +209,12 @@ namespace D3D12TranslationLayer
 
         // pusingha: We do not use this, but is needed for compilation
         ID3D12RootSignature* GetForImmediateUse() const { return nullptr; }
-        ID3DBlob* GetRootSignatureBlob() const { return m_pBlob.get(); }
+        Microsoft::WRL::ComPtr<ID3DBlob> GetRootSignatureBlob() { return m_pBlob; }
 
     protected:
         void Create(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootDesc) noexcept(false);
 
-        unique_comptr<ID3DBlob> m_pBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> m_pBlob;
     };
 
     class InternalRootSignature : public RootSignatureBase
